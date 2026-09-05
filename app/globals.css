@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+:root { --background: #f8f9fb; --foreground: #23262e; --primary: #4358df; --primary-foreground: #fff; --border: #e4e6ec; --ring: #4358df; --radius: .75rem; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: var(--foreground); }
+button { font: inherit; color: inherit; cursor: pointer; border: 0; background: transparent; }
+button:focus-visible, .board:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; }
+.workspace { position: fixed; inset: 0; overflow: hidden; background: var(--background); }
+.board { position: absolute; inset: 0; overflow: hidden; cursor: grab; touch-action: none; user-select: none; }
+.board.dragging { cursor: grabbing; }
+.world { position: absolute; top: 0; left: 0; transform-origin: 0 0; pointer-events: none; will-change: transform; }
+.origin { position: absolute; width: 16px; height: 16px; left: -8px; top: -8px; }
+.origin span { position: absolute; background: #9ba2b1; border-radius: 2px; }
+.origin span:first-child { width: 16px; height: 2px; top: 7px; }
+.origin span:last-child { width: 2px; height: 16px; left: 7px; }
+.canvas-label { position: absolute; top: 17px; left: -15px; white-space: nowrap; font-size: 12px; color: #737c8b; }
+.panel { position: absolute; background: #fff; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 3px 12px #202c4610, 0 1px 2px #202c4605; display: flex; align-items: center; }
+.title-panel { top: 20px; left: 20px; padding: 9px 16px 9px 9px; gap: 13px; }
+.brand { display: grid; place-items: center; width: 38px; height: 38px; background: #e9edff; color: #4358df; border-radius: 8px; }
+h1 { font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -.3px; }
+.badge { font-size: 12px; color: #747b89; padding-left: 14px; border-left: 1px solid var(--border); }
+.tools { top: 50%; left: 20px; transform: translateY(-50%); flex-direction: column; padding: 6px; gap: 6px; }
+.active-tool { display: flex; flex-direction: column; align-items: center; gap: 4px; background: #edf0ff; color: #394ed1; padding: 11px; border-radius: 7px; }
+.active-tool span { font-size: 12px; }
+.tools button, .zoom-controls button { display: grid; place-items: center; height: 38px; min-width: 38px; border-radius: 6px; }
+button:hover { background: #f0f2f7; } button:disabled { opacity: .3; cursor: default; }
+.divider { width: 1px; height: 23px; background: var(--border); margin: 0 5px; }
+.tools .divider { width: 27px; height: 1px; margin: 2px 0; }
+.zoom-controls { right: 20px; bottom: 20px; padding: 5px; gap: 2px; }
+.zoom-controls .zoom-value { min-width: 62px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.hint { position: absolute; left: 24px; bottom: 36px; display: flex; align-items: center; gap: 12px; color: #717987; font-size: 12px; pointer-events: none; }
+.hint i { width: 3px; height: 3px; background: #9da4af; border-radius: 50%; }
+@media (max-width: 680px) { .hint { display: none; } .title-panel { top: 12px; left: 12px; } .badge { display: none; } .tools { left: 12px; } .zoom-controls { bottom: 12px; right: 12px; } }
