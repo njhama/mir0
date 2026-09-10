@@ -1,0 +1,10 @@
+node_modules
+.git
+.openai
+.env*
+.wrangler
+.vinext
+dist
+dist-selfhost
+outputs
+*.tsbuildinfo

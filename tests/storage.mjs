@@ -1,0 +1,54 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import ts from 'typescript';
+import 'fake-indexeddb/auto';
+const url = source => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
+function compile(file) { return ts.transpileModule(readFileSync(file,'utf8'), { compilerOptions: { module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022 } }).outputText; }
+const geometry = url(compile('lib/connections.ts'));
+const entities = url(compile('lib/entities.ts').replace("'./connections'",JSON.stringify(geometry)));
+const clipboard = url(compile('lib/clipboard-image.ts'));
+const source = compile('lib/local-board.ts').replace("'./entities'",JSON.stringify(entities)).replace("'./clipboard-image'",JSON.stringify(clipboard));
+const client = suffix => import(url(source + '\n// ' + suffix));
+const req = request => new Promise((resolve,reject) => {request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
+const open = indexedDB.open('whiteboard-local',1);
+open.onupgradeneeded=()=>open.result.createObjectStore('boards');
+const legacy = await req(open);
+const note={id:'a',x:0,y:0,text:'original',color:'#fff0a3',fontSize:18,bold:false};
+const board={format:'whiteboard-entities',version:1,notes:[note],arrows:[]};
+await req(legacy.transaction('boards','readwrite').objectStore('boards').put(board,'default')); legacy.close();
+const a=await client('a'); assert.deepEqual(await a.loadLocalBoard(),board);
+const image='data:image/png;base64,YQ==';
+const changed={...board,notes:[{...note,text:'changed',image}]};
+await a.saveLocalBoard(changed);
+const b=await client('b'); assert.deepEqual(await b.loadLocalBoard(),changed);
+await a.saveLocalBoard({...changed,notes:[{...changed.notes[0],text:'newest'}]});
+await assert.rejects(()=>b.saveLocalBoard(board),/Another tab/);
+assert.equal((await a.loadLocalBoard()).notes[0].text,'newest');
+assert.equal((await a.loadPreviousBoard()).notes[0].text,'changed');
+const db=await req(indexedDB.open('whiteboard-local',2));
+assert.equal(await req(db.transaction('assets').objectStore('assets').count()),1);
+const head=await req(db.transaction('boards').objectStore('boards').get('default'));
+assert(head.board.notes[0].image.startsWith('asset:'));
+await req(db.transaction('boards','readwrite').objectStore('boards').put({...head,board:{invalid:true}},'default'));
+assert.equal((await a.loadLocalBoard()).notes[0].text,'changed'); assert.equal(a.recoveredBoard,true);
+await a.saveLocalBoard(changed);
+assert.equal((await a.loadLocalBoard()).notes[0].text,'changed');
+// Repeated checkpoints stay bounded and do not duplicate images.
+const realNow=Date.now; let now=realNow(); Date.now=()=>now;
+for(let i=0;i<65;i++){now+=60001;await a.saveLocalBoard({...changed,notes:[{...changed.notes[0],text:String(i)}]});}
+Date.now=realNow;
+assert((await req(db.transaction('history').objectStore('history').count()))<=61);
+assert.equal(await req(db.transaction('assets').objectStore('assets').count()),1);
+console.log('Passed legacy migration, round-trip, image deduplication, stale-tab rejection, previous-save recovery, corrupt-head recovery, atomic head retention on conflict, and bounded history.');
+db.close();
+
+const entityAPI = await import(entities);
+const frame = {...note,id:'frame',outline:true,borderStyle:'dashed',iconLabel:'Private network',width:520,height:360};
+const frameBoard={...board,notes:[frame]};
+assert(entityAPI.parseEntities(JSON.stringify(frameBoard)));
+const duplicated=entityAPI.duplicateEntities(frameBoard,32);
+assert.equal(duplicated.notes[0].borderStyle,'dashed');
+assert.equal(duplicated.notes[0].iconLabel,'Private network');
+assert.equal(duplicated.notes[0].width,520);
+assert.equal(entityAPI.parseEntities(JSON.stringify({...board,notes:[{...frame,borderStyle:'invalid'}]})),null);
+console.log('Passed outline serialization, label/style/dimensions copying, and invalid-style rejection.');
