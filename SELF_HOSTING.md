@@ -12,6 +12,8 @@ npm run build:selfhost
 npm run start:selfhost
 ```
 
+Or run **`npm run local`** to install dependencies, build, and start in one command. It uses the same address and autosave database as the manual steps above. Node.js 24 or newer is required. First launch needs internet access; subsequent unchanged installations are reused.
+
 Open http://127.0.0.1:3001. The default bind address is loopback, so other computers cannot connect. Dependency installation needs internet access; the finished app can run without internet access. The runtime server uses only Node built-ins, so you can also copy just `dist-selfhost/` and `scripts/serve-selfhost.mjs` onto another machine with Node installed.
 
 ## Docker option

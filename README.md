@@ -4,15 +4,17 @@ A self-hostable diagram editor with sticky notes, images, architecture icons, la
 
 ## Run locally
 
-Requires Node.js 24 and npm.
+Requires Node.js 24 or newer (includes npm). Clone or download this repository, open a terminal in its folder, then run one command:
 
 ```sh
-npm ci
-npm run build:selfhost
-npm run start:selfhost
+npm run local
 ```
 
 Open http://127.0.0.1:3001. See [self-hosting instructions](SELF_HOSTING.md) for Docker, networking, storage, and recovery details.
+
+The launcher installs locked dependencies on first run, builds the app, and starts the local server with autosave enabled. Later runs reuse dependencies unless the lockfile, package manifest, or Node environment changed. Internet is needed for installation, but the installed app runs offline. Keep the terminal open; Ctrl+C stops the server without deleting saved boards. No account, cloud service, or database setup is needed.
+
+Always return using the same browser and `http://127.0.0.1:3001/`. Saves are browser-local IndexedDB data, not files in the repository. Export backups for safekeeping. An occupied port produces a clear message rather than silently moving to a different address with separate storage.
 
 ## Controls
 
