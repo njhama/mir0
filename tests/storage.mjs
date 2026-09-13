@@ -52,3 +52,22 @@ assert.equal(duplicated.notes[0].iconLabel,'Private network');
 assert.equal(duplicated.notes[0].width,520);
 assert.equal(entityAPI.parseEntities(JSON.stringify({...board,notes:[{...frame,borderStyle:'invalid'}]})),null);
 console.log('Passed outline serialization, label/style/dimensions copying, and invalid-style rejection.');
+
+const { resizeBounds, resizeHandles } = await import(url(compile('lib/resize-outline.ts')));
+const { anchor } = await import(geometry);
+const originalSticky = { ...note, x: 40, y: 60, width: 240, height: 260, verticalAlign: 'middle' };
+for (const handle of resizeHandles) {
+  const bounds = resizeBounds(originalSticky, handle, 60, 40);
+  if (handle.includes('w')) assert.equal(bounds.x + bounds.width, 280);
+  else assert.equal(bounds.x, 40);
+  if (handle.includes('n')) assert.equal(bounds.y + bounds.height, 320);
+  else assert.equal(bounds.y, 60);
+}
+const resizedSticky = { ...originalSticky, ...resizeBounds(originalSticky, 'se', 60, 40) };
+assert.deepEqual(anchor(resizedSticky, 'right'), { x: 340, y: 210 });
+const stickyCopy = entityAPI.duplicateEntities({ ...board, notes: [resizedSticky] }, 32);
+assert.equal(stickyCopy.notes[0].width, 300);
+assert.equal(stickyCopy.notes[0].height, 300);
+await a.saveLocalBoard({ ...board, notes: [resizedSticky] });
+assert.deepEqual((await a.loadLocalBoard()).notes[0], resizedSticky);
+console.log('Passed sticky resizing in eight directions, updated connection anchors, copied dimensions, and saved dimensions/alignment.');

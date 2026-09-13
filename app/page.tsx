@@ -4,7 +4,10 @@
 /* The canvas is a custom keyboard-operated application surface. SVG arrow paths use button roles because HTML buttons cannot represent their hit areas. */
 /* oxlint-disable jsx-a11y/prefer-tag-over-role */
 /* oxlint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { Moon, Sun } from 'lucide-react';
+import { TodoList } from '@/components/todo-list';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Hand, Minus, Plus, LocateFixed, Grid2X2, MoveUpRight, SquarePlus, SquareDashed, Shapes, X, AlignLeft, AlignCenter, AlignRight, AlignStartVertical, AlignCenterVertical, AlignEndVertical } from 'lucide-react';
 import { resizeHandles, resizeBounds, type ResizeHandle } from '@/lib/resize-outline';
 import { DiagramIcon } from '@/components/diagram-icon';
@@ -22,7 +25,30 @@ type Endpoint = { noteId: string; side: Side };
 type Connection = { id: string; from: Endpoint; to: Endpoint };
 const colors = [{ name: 'Yellow', value: '#fff0a3' }, { name: 'Pink', value: '#ffd5e5' }, { name: 'Blue', value: '#cde9ff' }, { name: 'Green', value: '#d9f1c2' }, { name: 'Purple', value: '#e5d8ff' }];
 const clamp = (n: number) => Math.max(.1, Math.min(4, n));
-export default function Whiteboard() {
+function readTheme() {
+  try { const saved = localStorage.getItem('mir0-theme'); if (saved) return saved === 'dark'; } catch { /* Use the session or system theme. */ }
+  return document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+function subscribeTheme(callback: () => void) {
+  window.addEventListener('mir0-theme-change', callback);
+  window.addEventListener('storage', callback);
+  return () => { window.removeEventListener('mir0-theme-change', callback); window.removeEventListener('storage', callback); };
+}
+export default function ProjectWorkspace() {
+  const dark = useSyncExternalStore(subscribeTheme, readTheme, () => false);
+  useEffect(() => { document.documentElement.dataset.theme = dark ? 'dark' : 'light'; }, [dark]);
+  function toggleTheme() {
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('mir0-theme', dark ? 'light' : 'dark'); } catch { /* Keep the session preference if storage is unavailable. */ }
+    window.dispatchEvent(new Event('mir0-theme-change'));
+  }
+  return <Tabs defaultValue="board" className="project-workspace">
+    <header className="project-navigation"><span className="project-brand">mir0</span><TabsList aria-label="Project views"><TabsTrigger value="board">Whiteboard</TabsTrigger><TabsTrigger value="tasks">Task board</TabsTrigger></TabsList><span className="project-private">Saved on this device</span><button className="theme-toggle" onClick={toggleTheme} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'} title={dark ? 'Light mode' : 'Dark mode'}>{dark ? <Sun size={18} /> : <Moon size={18} />}</button></header>
+    <TabsContent value="board" keepMounted><Whiteboard /></TabsContent>
+    <TabsContent value="tasks" keepMounted><TodoList /></TabsContent>
+  </Tabs>;
+}
+function Whiteboard() {
   const surface = useRef<HTMLDivElement>(null);
   const camera = useRef<Camera>({ x: 0, y: 0, zoom: 1 });
   const [view, setView] = useState<Camera>({ x: 0, y: 0, zoom: 1 });
@@ -274,7 +300,7 @@ export default function Whiteboard() {
           {connecting && sourceNote && cursor && <path d={connectionPath(anchor(sourceNote, connecting.side), connecting.side, cursor, 'left')} className="connection-line connection-preview" markerEnd="url(#arrowhead)" />}
         </svg>
         <div className="origin"><span /><span /></div><div className="canvas-label">0, 0</div>
-        {[...boxes].sort((a, b) => Number(!!b.outline) - Number(!!a.outline)).map((box, index) => <section key={box.id} className={'text-box sticky-note' + (box.image || box.icon || box.outline ? ' image-entity' : '') + (box.outline ? ' outline-entity' : '') + (selectedEntities.includes(box.id) ? ' selected' : '') + (connecting ? ' connection-target' : '')} aria-label={(box.image ? 'Image ' : 'Sticky note ') + (index + 1)} style={{ left: box.x, top: box.y, background: box.image || box.icon || box.outline ? undefined : box.color, width: box.image || box.icon || box.outline ? box.width : undefined, height: box.image || box.icon || box.outline ? box.height : undefined }} onPointerDown={e => { e.stopPropagation(); setSelectedId(box.id); }} onFocus={() => setSelectedId(box.id)}>
+        {[...boxes].sort((a, b) => Number(!!b.outline) - Number(!!a.outline)).map((box, index) => <section key={box.id} className={'text-box sticky-note' + (box.image || box.icon || box.outline ? ' image-entity' : '') + (box.outline ? ' outline-entity' : '') + (selectedEntities.includes(box.id) ? ' selected' : '') + (connecting ? ' connection-target' : '')} aria-label={(box.image ? 'Image ' : 'Sticky note ') + (index + 1)} style={{ left: box.x, top: box.y, background: box.image || box.icon || box.outline ? undefined : box.color, width: box.width, height: box.height }} onPointerDown={e => { e.stopPropagation(); setSelectedId(box.id); }} onFocus={() => setSelectedId(box.id)}>
           {sides.map(side => <button key={side} className={'connection-dot dot-' + side + (connecting?.noteId === box.id && connecting.side === side ? ' connecting' : '')} data-note-id={box.id} data-side={side} aria-label={'Connect ' + side + ' of note ' + (index + 1)} title="Drag to another dot, or click two dots to connect" onPointerDown={e => {
             if (e.button !== 0) return;
             e.stopPropagation();
@@ -304,7 +330,7 @@ export default function Whiteboard() {
 
             <button className="box-delete" aria-label="Delete entity" title="Delete entity" onClick={() => { setBoxes(current => current.filter(item => item.id !== box.id)); setConnections(current => current.filter(item => item.from.noteId !== box.id && item.to.noteId !== box.id)); if (connecting?.noteId === box.id) { setConnecting(null); setCursor(null); } }}><X size={15} /></button>
           </div>
-          {!box.image && !box.icon && !box.outline && editingId === box.id && selectedId === box.id ? <Textarea onBlur={() => setEditingId(null)} ref={el => { if (el) { el.style.height = '0px'; el.style.paddingTop = '18px'; const contentHeight = el.scrollHeight - 36; el.style.height = '260px'; const extra = Math.max(0, 224 - contentHeight); el.style.paddingTop = (18 + (box.verticalAlign === 'middle' ? extra / 2 : box.verticalAlign === 'bottom' ? extra : 0)) + 'px'; } if (el && pendingFocus.current === box.id) { pendingFocus.current = null; el.focus({ preventScroll: true }); } }} aria-label={'Text in note ' + (index + 1)} className="box-text" style={{ fontSize: box.fontSize, fontWeight: box.bold ? 700 : 400, textAlign: box.textAlign ?? 'left', justifyContent: box.image ? undefined : box.verticalAlign === 'middle' ? 'safe center' : box.verticalAlign === 'bottom' ? 'safe flex-end' : 'flex-start' }} placeholder="Write an idea…" value={box.text} onChange={e => {
+          {!box.image && !box.icon && !box.outline && editingId === box.id && selectedId === box.id ? <Textarea onBlur={() => setEditingId(null)} ref={el => { if (el) { el.style.height = '0px'; el.style.paddingTop = '18px'; const contentHeight = el.scrollHeight - 36; el.style.height = (box.height ?? 260) + 'px'; const extra = Math.max(0, (box.height ?? 260) - 36 - contentHeight); el.style.paddingTop = (18 + (box.verticalAlign === 'middle' ? extra / 2 : box.verticalAlign === 'bottom' ? extra : 0)) + 'px'; } if (el && pendingFocus.current === box.id) { pendingFocus.current = null; el.focus({ preventScroll: true }); } }} aria-label={'Text in note ' + (index + 1)} className="box-text" style={{ fontSize: box.fontSize, fontWeight: box.bold ? 700 : 400, textAlign: box.textAlign ?? 'left', justifyContent: box.image ? undefined : box.verticalAlign === 'middle' ? 'safe center' : box.verticalAlign === 'bottom' ? 'safe flex-end' : 'flex-start' }} placeholder="Write an idea…" value={box.text} onChange={e => {
             const text = e.target.value;
             setBoxes(current => current.map(item => item.id === box.id ? { ...item, text } : item));
           }} onKeyDown={e => { e.stopPropagation(); if (e.key === 'Escape') { setEditingId(null); setConnecting(null); setCursor(null); surface.current?.focus(); } }} /> : <button className="box-text note-body" aria-label={'Note ' + (index + 1) + '. Click to select, drag to move, click again to edit.'} style={{ fontSize: box.fontSize, fontWeight: box.bold ? 700 : 400, textAlign: box.textAlign ?? 'left', justifyContent: box.image ? undefined : box.verticalAlign === 'middle' ? 'safe center' : box.verticalAlign === 'bottom' ? 'safe flex-end' : 'flex-start' }} onPointerDown={e => {
@@ -332,9 +358,9 @@ export default function Whiteboard() {
             else setSelectedId(box.id);
           }}>{box.outline ? <><span className="outline-border" style={{ borderStyle: box.borderStyle ?? 'dashed', borderColor: box.color }} />{['top','right','bottom','left'].map(side => <span key={side} className={'outline-edge outline-edge-' + side} />)}<span className="outline-label" style={{ color: box.color }}>{box.iconLabel ?? 'Group'}</span></> : box.icon ? <DiagramIcon id={box.icon} label={box.iconLabel} /> : box.image ? <img src={box.image} alt="Clipboard content" draggable={false} onLoad={e => { if (!box.width || !box.height) updateNote(box.id, { width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight }); }} /> : <span className="note-content">{box.text || <span className="note-placeholder">Write an idea…</span>}</span>}</button>}
 
-          {box.outline && selectedEntities.includes(box.id) && resizeHandles.map(handle => <button key={handle} className={'outline-resize resize-' + handle} aria-label={'Resize outline ' + handle} title="Drag to resize" onPointerDown={e => {
+          {!box.image && !box.icon && selectedEntities.includes(box.id) && resizeHandles.map(handle => <button key={handle} className={'outline-resize resize-' + handle} aria-label={'Resize ' + (box.outline ? 'outline ' : 'sticky note ') + handle} title="Drag to resize" onPointerDown={e => {
             if(e.button !== 0) return; e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId);
-            resizeOutline.current = { id: box.id, pointer: e.pointerId, x: e.clientX, y: e.clientY, originX: box.x, originY: box.y, width: box.width ?? 520, height: box.height ?? 360, handle };
+            resizeOutline.current = { id: box.id, pointer: e.pointerId, x: e.clientX, y: e.clientY, originX: box.x, originY: box.y, width: box.width ?? (box.outline ? 520 : 240), height: box.height ?? (box.outline ? 360 : 260), handle };
           }} onPointerMove={e => {
             const r=resizeOutline.current; if(!r || r.pointer !== e.pointerId) return;
             updateNote(r.id, resizeBounds({x:r.originX,y:r.originY,width:r.width,height:r.height},r.handle,(e.clientX-r.x)/camera.current.zoom,(e.clientY-r.y)/camera.current.zoom));
@@ -348,7 +374,7 @@ export default function Whiteboard() {
       <p className="resize-hint">Drag a corner or edge handle to resize.</p>
     </div>}
     {selected?.icon && <div className="icon-label-toolbar" style={{ left: 'clamp(160px, ' + (view.x + selected.x * view.zoom + (selected.width ?? 120) / 2 * view.zoom) + 'px, calc(100vw - 160px))', top: 'clamp(88px, ' + (view.y + selected.y * view.zoom - 78) + 'px, calc(100dvh - 88px))' }}><label htmlFor="icon-label">Icon label</label><Input id="icon-label" maxLength={500} value={selected.iconLabel ?? iconCatalog.find(item => item.id === selected.icon)?.label ?? ''} onChange={e => updateNote(selected.id, { iconLabel: e.target.value })} onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter' || e.key === 'Escape') surface.current?.focus(); }} /></div>}
-    {selected && !selected.image && !selected.icon && !selected.outline && (<div className="note-format floating-format" aria-label="Sticky note formatting" style={{ left: 'clamp(192px, ' + (view.x + selected.x * view.zoom + 120 * view.zoom) + 'px, calc(100vw - 192px))', top: 'clamp(88px, ' + (view.y + selected.y * view.zoom - 106) + 'px, calc(100dvh - 72px))' }}><div className="note-colors" aria-label="Note color">{colors.map(color => <button key={color.name} aria-label={color.name + ' note'} aria-pressed={selected.color === color.value} title={color.name} className="color-swatch" style={{ background: color.value }} onClick={() => updateNote(selected.id, { color: color.value })} />)}</div><div className="text-format"><button aria-label="Decrease text size" disabled={selected.fontSize <= 12} onClick={() => updateNote(selected.id, { fontSize: selected.fontSize - 2 })}>A−</button><span>{selected.fontSize}</span><button aria-label="Increase text size" disabled={selected.fontSize >= 36} onClick={() => updateNote(selected.id, { fontSize: selected.fontSize + 2 })}>A+</button><button aria-label="Bold text" aria-pressed={selected.bold} onClick={() => updateNote(selected.id, { bold: !selected.bold })}><b>B</b></button></div><div className="alignment-format" aria-label="Text alignment">
+    {selected && !selected.image && !selected.icon && !selected.outline && (<div className="note-format floating-format" aria-label="Sticky note formatting" style={{ left: 'clamp(192px, ' + (view.x + selected.x * view.zoom + (selected.width ?? 240) / 2 * view.zoom) + 'px, calc(100vw - 192px))', top: 'clamp(88px, ' + (view.y + selected.y * view.zoom - 106) + 'px, calc(100dvh - 72px))' }}><div className="note-colors" aria-label="Note color">{colors.map(color => <button key={color.name} aria-label={color.name + ' note'} aria-pressed={selected.color === color.value} title={color.name} className="color-swatch" style={{ background: color.value }} onClick={() => updateNote(selected.id, { color: color.value })} />)}</div><div className="text-format"><button aria-label="Decrease text size" disabled={selected.fontSize <= 12} onClick={() => updateNote(selected.id, { fontSize: selected.fontSize - 2 })}>A−</button><span>{selected.fontSize}</span><button aria-label="Increase text size" disabled={selected.fontSize >= 36} onClick={() => updateNote(selected.id, { fontSize: selected.fontSize + 2 })}>A+</button><button aria-label="Bold text" aria-pressed={selected.bold} onClick={() => updateNote(selected.id, { bold: !selected.bold })}><b>B</b></button></div><div className="alignment-format" aria-label="Text alignment">
 {([{ value: 'left', Icon: AlignLeft }, { value: 'center', Icon: AlignCenter }, { value: 'right', Icon: AlignRight }] as const).map(({ value, Icon }) => <button key={value} aria-label={'Align text ' + value} title={'Align ' + value} aria-pressed={(selected.textAlign ?? 'left') === value} onClick={() => updateNote(selected.id, { textAlign: value })}><Icon size={18} /></button>)}
 <span className="alignment-divider" />
 {([{ value: 'top', Icon: AlignStartVertical }, { value: 'middle', Icon: AlignCenterVertical }, { value: 'bottom', Icon: AlignEndVertical }] as const).map(({ value, Icon }) => <button key={value} aria-label={'Align text vertically ' + value} title={'Vertical ' + value} aria-pressed={(selected.verticalAlign ?? 'top') === value} onClick={() => updateNote(selected.id, { verticalAlign: value })}><Icon size={18} /></button>)}
@@ -381,26 +407,3 @@ setEditingId(null); setSelectedId(id); setIconsOpen(false); setIconQuery('');
     <div className="panel zoom-controls" aria-label="Zoom controls"><button aria-label="Zoom out" disabled={view.zoom <= .1} onClick={() => zoomCenter(1 / 1.2)}><Minus size={18} /></button><button className="zoom-value" title="Reset zoom to 100%" onClick={() => zoomCenter(1 / camera.current.zoom)}>{Math.round(view.zoom * 100)}%</button><button aria-label="Zoom in" disabled={view.zoom >= 4} onClick={() => zoomCenter(1.2)}><Plus size={18} /></button><div className="divider" /><button aria-label="Return to origin" title="Return to origin (0)" onClick={reset}><LocateFixed size={19} /></button></div>
   </main>;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

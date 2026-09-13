@@ -42,3 +42,11 @@ The original hosted build remains available through `npm run build`; the `:selfh
 ## Icon artwork
 
 AWS, GitHub, and Redis assets come from their official sources; generic icons use Lucide. See [asset sources](public/icons/SOURCES.md). Vendor artwork and trademarks remain subject to their respective terms. No Lucidchart source or artwork is included.
+
+### Task board
+
+Use the **Task board** tab to move cards between To do, In progress, Waiting / Blocked, and Done. Click a card to edit its title, description, status, due date, priority, project/tag chips, and checklist, then choose **Save changes**. Create custom tags in task details and reuse tags from saved tasks. Cards show due-date countdowns and checklist progress. The **Today** filter shows unfinished tasks due today or overdue. The top bar includes a saved dark/light theme preference.
+
+Adding, moving, and deleting tasks saves immediately; the board reports saving failures. Existing tasks and diagrams are preserved.
+
+Tasks are stored separately from diagrams in the browser's `mir0-todos` IndexedDB database. They stay on the current browser and origin (host + port), and are not uploaded. Clearing site data removes tasks too. Whiteboard exports currently contain diagrams only, not tasks.
