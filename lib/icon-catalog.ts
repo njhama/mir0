@@ -1,3 +1,5 @@
+import devIcons from './dev-icon-catalog.json';
+import { engineeringIcons } from './engineering-icon-catalog';
 import { generalIcons } from './general-icon-catalog';
 import awsIcons from './aws-icon-catalog.json';
 export const iconCatalog = [
@@ -19,8 +21,7 @@ export const iconCatalog = [
   { id: 'user', label: 'User', category: 'General', color: '#516176', symbol: 'user' },
   { id: 'github', label: 'GitHub', category: 'Development', color: '#24292f', symbol: 'git' },
   ...generalIcons,
+  ...devIcons.map(item => ({ ...item, symbol: 'server' as const })),
+  ...engineeringIcons.map(item => ({ ...item, category: 'Engineering concepts', color: '#457b9d' })),
   ...awsIcons.map(item => ({ ...item, symbol: 'server' as const })),
 ] as const;
-
-
-

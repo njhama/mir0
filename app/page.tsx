@@ -1,14 +1,19 @@
 'use client';
+/* Pointer refs below are accessed only inside event handlers; the compiler lint misclassifies nested endpoint rendering. */
+/* oxlint-disable react/react-compiler */
 /* Local clipboard data URLs must render directly without an image optimization server. */
 /* oxlint-disable next/no-img-element */
 /* The canvas is a custom keyboard-operated application surface. SVG arrow paths use button roles because HTML buttons cannot represent their hit areas. */
 /* oxlint-disable jsx-a11y/prefer-tag-over-role */
 /* oxlint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex */
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Moon, Sun } from 'lucide-react';
+import { useBoardHistory } from '@/lib/use-board-history';
+import { Undo2, Redo2, Search, Moon, Sun } from 'lucide-react';
 import { TodoList } from '@/components/todo-list';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Hand, Minus, Plus, LocateFixed, Grid2X2, MoveUpRight, SquarePlus, SquareDashed, Shapes, X, AlignLeft, AlignCenter, AlignRight, AlignStartVertical, AlignCenterVertical, AlignEndVertical } from 'lucide-react';
+import { overlapsRect, touchesEntityBorder, clickSelection } from '@/lib/selection';
+import { movementIds, moveEntities } from '@/lib/move-entities';
 import { resizeHandles, resizeBounds, type ResizeHandle } from '@/lib/resize-outline';
 import { DiagramIcon } from '@/components/diagram-icon';
 import { iconCatalog } from '@/lib/icon-catalog';
@@ -16,13 +21,13 @@ import { Popover, PopoverTrigger, PopoverContent, PopoverTitle } from '@/compone
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { anchor, connectionPath, sides, type Side } from '@/lib/connections';
+import { anchor, connectionPath, connectionMidpoint, sides, type Side } from '@/lib/connections';
 import { copyEntities, parseEntities, duplicateEntities } from '@/lib/entities';
 import { loadLocalBoard, saveLocalBoard, readClipboardImage, recoveredBoard, loadPreviousBoard } from '@/lib/local-board';
 type Camera = { x: number; y: number; zoom: number };
 type TextBox = { id: string; x: number; y: number; text: string; color: string; fontSize: number; bold: boolean; outline?: boolean; borderStyle?: 'solid' | 'dashed' | 'dotted'; icon?: string; iconLabel?: string; textAlign?: 'left' | 'center' | 'right'; verticalAlign?: 'top' | 'middle' | 'bottom'; image?: string; width?: number; height?: number };
 type Endpoint = { noteId: string; side: Side };
-type Connection = { id: string; from: Endpoint; to: Endpoint };
+type Connection = { id: string; label?: string; bidirectional?: boolean; from: Endpoint; to: Endpoint };
 const colors = [{ name: 'Yellow', value: '#fff0a3' }, { name: 'Pink', value: '#ffd5e5' }, { name: 'Blue', value: '#cde9ff' }, { name: 'Green', value: '#d9f1c2' }, { name: 'Purple', value: '#e5d8ff' }];
 const clamp = (n: number) => Math.max(.1, Math.min(4, n));
 function readTheme() {
@@ -61,14 +66,25 @@ function Whiteboard() {
   const [dragging, setDragging] = useState(false);
   const [marquee, setMarquee] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const selectionDrag = useRef<{ pointerId: number; x: number; y: number } | null>(null);
-  const [boxes, setBoxes] = useState<TextBox[]>([]);
+  const history = useBoardHistory<TextBox, Connection>();
+  const resetHistory = history.reset;
+  const { notes: boxes, arrows: connections } = history.state.present;
+  const setBoxes = history.setNotes, setConnections = history.setArrows;
+  const [search, setSearch] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchInput = useRef<HTMLInputElement>(null);
   const [selectedId, selectOne] = useState<string | null>(null);
   const [selectedEntities, setSelectedEntities] = useState<string[]>([]);
   const pasteSequence = useRef({ text: '', count: 0 });
   function setSelectedId(id: string | null) { selectOne(id); setSelectedEntities(id ? [id] : []); }
+  function selectEntity(id: string, additive: boolean) {
+    const next = clickSelection(selectedEntities, id, additive);
+    setSelectedEntities(next); selectOne(next.length === 1 ? id : null);
+    return next;
+  }
   const [editingId, setEditingId] = useState<string | null>(null);
-  const noteGesture = useRef<{ id: string; pointerId: number; startX: number; startY: number; x: number; y: number; moved: boolean; wasSelected: boolean } | null>(null);
-  const [connections, setConnections] = useState<Connection[]>([]);
+  const noteGesture = useRef<{ id: string; pointerId: number; startX: number; startY: number; x: number; y: number; moved: boolean; wasSelected: boolean; ids: string[] } | null>(null);
+
   const [loaded, setLoaded] = useState(false);
   const [storageEnabled, setStorageEnabled] = useState(false);
   const [saveStatus, setSaveStatus] = useState('Opening local board…');
@@ -86,13 +102,12 @@ function Whiteboard() {
       if (board) {
         const valid = parseEntities(JSON.stringify(board));
         if (!valid) throw new Error('Stored board could not be read.');
-        setBoxes(valid.notes); setConnections(valid.arrows);
+        resetHistory({ notes: valid.notes, arrows: valid.arrows });
       }
       skipInitialSave.current = !recoveredBoard; setStorageEnabled(true); setLoaded(true);
       if (recoveredBoard) setImageError('Recovered your board from an intact autosave snapshot.');
     }).catch(() => { if (!cancelled) { setLoaded(true); setSaveStatus('Saving unavailable — export a backup before closing'); } });
-    return () => { cancelled = true; };
-  }, []);
+    return () => { cancelled = true; }; }, [resetHistory]);
   useEffect(() => {
     if (!storageEnabled) return;
     if (skipInitialSave.current) { skipInitialSave.current = false; queueMicrotask(() => setSaveStatus('Saved on this device')); return; }
@@ -110,6 +125,22 @@ function Whiteboard() {
     window.addEventListener('beforeunload', beforeUnload);
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, []);
+  function undoRedo(redo = false) {
+    if (redo) history.redo(); else history.undo();
+    noteGesture.current=null; resizeOutline.current=null; connectionDrag.current=null;
+    setEditingId(null); setSelectedId(null); setConnecting(null); setReconnecting(null); setCursor(null);
+  }
+  function entityLabel(box: TextBox) {
+    return box.iconLabel || box.text || (box.icon ? iconCatalog.find(item=>item.id===box.icon)?.label : box.image ? 'Image' : box.outline ? 'Group' : 'Untitled sticky note') || 'Entity';
+  }
+  const searchResults = search.trim() ? boxes.filter(box => `${entityLabel(box)} ${box.icon ?? ''}`.toLowerCase().includes(search.trim().toLowerCase())) : [];
+  function jumpTo(box: TextBox) {
+    const el=surface.current; if(!el) return;
+    const width=box.width??(box.icon?120:240), height=box.height??(box.icon?128:260);
+    const zoom=clamp(Math.min(1,el.clientWidth*.65/width,el.clientHeight*.65/height));
+    apply({x:el.clientWidth/2-(box.x+width/2)*zoom,y:el.clientHeight/2-(box.y+height/2)*zoom,zoom});
+    setEditingId(null); setSelectedId(box.id); setSearchOpen(false); surface.current?.focus();
+  }
   function exportBackup() {
     const blob = new Blob([JSON.stringify({ format: 'whiteboard-entities', version: 1, notes: boxes, arrows: connections })], { type: 'application/json' });
     const url = URL.createObjectURL(blob), link = document.createElement('a');
@@ -119,7 +150,12 @@ function Whiteboard() {
   const [connecting, setConnecting] = useState<Endpoint | null>(null);
   const [cursor, setCursor] = useState<{ x: number; y: number } | null>(null);
   const connectionDrag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
+  const [reconnecting, setReconnecting] = useState<{ id: string; end: 'from' | 'to' } | null>(null);
   function connect(from: Endpoint, to: Endpoint) {
+    if (reconnecting) {
+      if (from.noteId !== to.noteId) setConnections(current => current.map(item => item.id === reconnecting.id ? { ...item, [reconnecting.end]: to } : item));
+      setReconnecting(null); setConnecting(null); setCursor(null); return;
+    }
     if (from.noteId !== to.noteId) setConnections(current => current.some(item => item.from.noteId === from.noteId && item.from.side === from.side && item.to.noteId === to.noteId && item.to.side === to.side) ? current : [...current, { id: crypto.randomUUID(), from, to }]);
     setConnecting(null); setCursor(null);
   }
@@ -184,9 +220,16 @@ function Whiteboard() {
     } catch { /* Optional browser capability. */ }
     return () => lifecycle.abort();
   }, []);
+  const selectedArrow = connections.find(arrow => arrow.id === selectedId);
   const selected = boxes.find(note => note.id === selectedId);
   const sourceNote = connecting ? boxes.find(note => note.id === connecting.noteId) : null;
-  return <main className="workspace" onCopy={e => {
+  return <main className="workspace" onPointerDownCapture={() => history.begin()} onFocusCapture={e => { if(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) history.begin(); }} onKeyDownCapture={e => {
+    const input=e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || (e.target instanceof HTMLElement && e.target.isContentEditable);
+    if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='f') {e.preventDefault();setSearchOpen(true);searchInput.current?.focus();return;}
+    if(input) return;
+    if((e.ctrlKey||e.metaKey) && ['z','y'].includes(e.key.toLowerCase())) {e.preventDefault();e.stopPropagation();undoRedo(e.shiftKey||e.key.toLowerCase()==='y');return;}
+    history.begin();
+  }} onCopy={e => {
     if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return;
     if (!selectedEntities.length) return;
     const data = copyEntities(boxes, connections, selectedEntities);
@@ -220,7 +263,7 @@ function Whiteboard() {
     if (e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLInputElement) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') { e.preventDefault(); selectOne(null); setSelectedEntities([...boxes.map(note => note.id), ...connections.map(arrow => arrow.id)]); }
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); setBoxes(current => current.filter(note => !selectedEntities.includes(note.id))); setConnections(current => current.filter(arrow => !selectedEntities.includes(arrow.id) && !selectedEntities.includes(arrow.from.noteId) && !selectedEntities.includes(arrow.to.noteId))); setSelectedId(null); }
-    if (e.key === 'Escape') { selectionDrag.current = null; setMarquee(null); setSelectedId(null); setConnecting(null); setCursor(null); }
+    if (e.key === 'Escape') { setReconnecting(null); selectionDrag.current = null; setMarquee(null); setSelectedId(null); setConnecting(null); setCursor(null); }
   }}>
     <div ref={surface} role="application" className={'board' + (dragging ? ' dragging' : '')} tabIndex={0} aria-label="Whiteboard. Right drag to pan. Scroll to zoom. Left drag on empty canvas to box select. Arrow keys pan, plus and minus zoom, zero resets."
       onContextMenu={e => e.preventDefault()}
@@ -262,8 +305,8 @@ function Whiteboard() {
           const area = { x: Math.min(x, selection.x), y: Math.min(y, selection.y), width: Math.abs(x - selection.x), height: Math.abs(y - selection.y) };
           setMarquee(area);
           if (Math.hypot(area.width, area.height) * c.zoom < 4) return;
-          const overlaps = (r: { x: number; y: number; width: number; height: number }) => r.x <= area.x + area.width && r.x + r.width >= area.x && r.y <= area.y + area.height && r.y + r.height >= area.y;
-          const ids = boxes.filter(box => overlaps({ x: box.x, y: box.y, width: box.width ?? 240, height: box.height ?? 260 })).map(box => box.id);
+          const overlaps = (r: { x: number; y: number; width: number; height: number }) => overlapsRect(area, r);
+          const ids = boxes.filter(box => touchesEntityBorder(area, { x: box.x, y: box.y, width: box.width ?? (box.icon ? 120 : box.outline ? 520 : 240), height: box.height ?? (box.icon ? 128 : box.outline ? 360 : 260) })).map(box => box.id);
           for (const path of e.currentTarget.querySelectorAll<SVGPathElement>('.connection-hit')) {
             const length = path.getTotalLength();
             for (let i = 0; i <= 64; i++) {
@@ -290,17 +333,28 @@ function Whiteboard() {
       <div className="world" style={{ transform: 'translate(' + view.x + 'px,' + view.y + 'px) scale(' + view.zoom + ')' }}>
         {marquee && <div className="selection-marquee" style={{ left: marquee.x, top: marquee.y, width: marquee.width, height: marquee.height }} />}
         <svg className="connections" aria-label="Connections between notes">
-          <defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#586581" /></marker></defs>
+          <defs><marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#586581" /></marker></defs>
           {connections.map(connection => {
             const from = boxes.find(note => note.id === connection.from.noteId), to = boxes.find(note => note.id === connection.to.noteId);
-            if (!from || !to) return null;
+            if (!from || !to || reconnecting?.id === connection.id) return null;
             const path = connectionPath(anchor(from, connection.from.side), connection.from.side, anchor(to, connection.to.side), connection.to.side);
-            return <g key={connection.id}><path d={path} className={selectedEntities.includes(connection.id) ? "connection-line selected-arrow" : "connection-line"} markerEnd="url(#arrowhead)" /><path d={path} className="connection-hit" data-entity-id={connection.id} role="button" tabIndex={0} aria-label="Select arrow" onPointerDown={e => e.stopPropagation()} onClick={() => setSelectedId(connection.id)} onKeyDown={e => { if (['Enter', ' '].includes(e.key)) { e.preventDefault(); e.stopPropagation(); setSelectedId(connection.id); } }}><title>Click to select arrow; Delete to remove</title></path></g>;
+            const midpoint = connectionMidpoint(anchor(from, connection.from.side), connection.from.side, anchor(to, connection.to.side), connection.to.side);
+            return <g key={connection.id}><path d={path} className={selectedEntities.includes(connection.id) ? "connection-line selected-arrow" : "connection-line"} markerEnd="url(#arrowhead)" markerStart={connection.bidirectional ? "url(#arrowhead)" : undefined} /><path d={path} className="connection-hit" data-entity-id={connection.id} role="button" tabIndex={0} aria-label="Select arrow" onPointerDown={e => {
+              if (e.button !== 0) return; e.preventDefault(); e.stopPropagation();
+              noteGesture.current={id:connection.id,pointerId:e.pointerId,startX:e.clientX,startY:e.clientY,x:e.clientX,y:e.clientY,moved:false,wasSelected:false,ids:movementIds(clickSelection(selectedEntities, connection.id, e.shiftKey),connections)};
+              setEditingId(null); selectEntity(connection.id, e.shiftKey);
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }} onPointerMove={e => {
+              const drag=noteGesture.current; if (!drag || drag.id !== connection.id || drag.pointerId !== e.pointerId) return;
+              if (!drag.moved && Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<4) return;
+              drag.moved=true; const dx=(e.clientX-drag.x)/camera.current.zoom, dy=(e.clientY-drag.y)/camera.current.zoom;
+              drag.x=e.clientX; drag.y=e.clientY; setBoxes(current=>moveEntities(current,drag.ids,dx,dy));
+            }} onPointerUp={() => { noteGesture.current=null; }} onPointerCancel={() => { noteGesture.current=null; }} onLostPointerCapture={() => { noteGesture.current=null; }} onKeyDown={e => { if (['Enter', ' '].includes(e.key)) { e.preventDefault(); e.stopPropagation(); selectEntity(connection.id, e.shiftKey); } }}><title>Click to select arrow; Delete to remove</title></path>{connection.label && <text x={midpoint.x} y={midpoint.y} className="arrow-label" textAnchor="middle" dominantBaseline="central" onPointerDown={e=>{e.stopPropagation();selectEntity(connection.id,e.shiftKey);}}>{connection.label}</text>}</g>;
           })}
-          {connecting && sourceNote && cursor && <path d={connectionPath(anchor(sourceNote, connecting.side), connecting.side, cursor, 'left')} className="connection-line connection-preview" markerEnd="url(#arrowhead)" />}
+          {connecting && sourceNote && cursor && <path d={reconnecting?.end === 'from' ? connectionPath(cursor, 'right', anchor(sourceNote, connecting.side), connecting.side) : connectionPath(anchor(sourceNote, connecting.side), connecting.side, cursor, 'left')} className="connection-line connection-preview" markerEnd="url(#arrowhead)" />}
         </svg>
         <div className="origin"><span /><span /></div><div className="canvas-label">0, 0</div>
-        {[...boxes].sort((a, b) => Number(!!b.outline) - Number(!!a.outline)).map((box, index) => <section key={box.id} className={'text-box sticky-note' + (box.image || box.icon || box.outline ? ' image-entity' : '') + (box.outline ? ' outline-entity' : '') + (selectedEntities.includes(box.id) ? ' selected' : '') + (connecting ? ' connection-target' : '')} aria-label={(box.image ? 'Image ' : 'Sticky note ') + (index + 1)} style={{ left: box.x, top: box.y, background: box.image || box.icon || box.outline ? undefined : box.color, width: box.width, height: box.height }} onPointerDown={e => { e.stopPropagation(); setSelectedId(box.id); }} onFocus={() => setSelectedId(box.id)}>
+        {[...boxes].sort((a, b) => Number(!!b.outline) - Number(!!a.outline)).map((box, index) => <section key={box.id} className={'text-box sticky-note' + (box.image || box.icon || box.outline ? ' image-entity' : '') + (box.outline ? ' outline-entity' : '') + (box.icon ? ' icon-entity' : '') + (selectedEntities.includes(box.id) ? ' selected' : '') + (connecting ? ' connection-target' : '')} aria-label={(box.image ? 'Image ' : 'Sticky note ') + (index + 1)} style={{ left: box.x, top: box.y, background: box.image || box.icon || box.outline ? undefined : box.color, width: box.width, height: box.height }} onPointerDown={e => { e.stopPropagation(); selectEntity(box.id, e.shiftKey); }} onFocus={() => { if (!noteGesture.current && !selectedEntities.includes(box.id)) setSelectedId(box.id); }}>
           {sides.map(side => <button key={side} className={'connection-dot dot-' + side + (connecting?.noteId === box.id && connecting.side === side ? ' connecting' : '')} data-note-id={box.id} data-side={side} aria-label={'Connect ' + side + ' of note ' + (index + 1)} title="Drag to another dot, or click two dots to connect" onPointerDown={e => {
             if (e.button !== 0) return;
             e.stopPropagation();
@@ -336,8 +390,8 @@ function Whiteboard() {
           }} onKeyDown={e => { e.stopPropagation(); if (e.key === 'Escape') { setEditingId(null); setConnecting(null); setCursor(null); surface.current?.focus(); } }} /> : <button className="box-text note-body" aria-label={'Note ' + (index + 1) + '. Click to select, drag to move, click again to edit.'} style={{ fontSize: box.fontSize, fontWeight: box.bold ? 700 : 400, textAlign: box.textAlign ?? 'left', justifyContent: box.image ? undefined : box.verticalAlign === 'middle' ? 'safe center' : box.verticalAlign === 'bottom' ? 'safe flex-end' : 'flex-start' }} onPointerDown={e => {
             if (e.button !== 0) return;
             e.preventDefault(); e.stopPropagation();
-            noteGesture.current = { id: box.id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY, moved: false, wasSelected: selectedId === box.id };
-            setEditingId(null); setSelectedId(box.id);
+            noteGesture.current = { id: box.id, pointerId: e.pointerId, startX: e.clientX, startY: e.clientY, x: e.clientX, y: e.clientY, moved: false, wasSelected: !e.shiftKey && selectedId === box.id && selectedEntities.length === 1, ids: movementIds(clickSelection(selectedEntities, box.id, e.shiftKey), connections) };
+            setEditingId(null); selectEntity(box.id, e.shiftKey);
             e.currentTarget.focus({ preventScroll: true }); e.currentTarget.setPointerCapture(e.pointerId);
           }} onPointerMove={e => {
             const drag = noteGesture.current;
@@ -346,7 +400,7 @@ function Whiteboard() {
             drag.moved = true;
             const dx = (e.clientX - drag.x) / camera.current.zoom, dy = (e.clientY - drag.y) / camera.current.zoom;
             drag.x = e.clientX; drag.y = e.clientY;
-            setBoxes(current => current.map(note => note.id === box.id ? { ...note, x: note.x + dx, y: note.y + dy } : note));
+            setBoxes(current => moveEntities(current, drag.ids, dx, dy));
           }} onPointerUp={e => {
             const drag = noteGesture.current;
             if (!drag || drag.pointerId !== e.pointerId) return;
@@ -356,18 +410,40 @@ function Whiteboard() {
             if (e.detail !== 0) return;
             if (!box.image && !box.icon && !box.outline && selectedId === box.id) { pendingFocus.current = box.id; setEditingId(box.id); }
             else setSelectedId(box.id);
-          }}>{box.outline ? <><span className="outline-border" style={{ borderStyle: box.borderStyle ?? 'dashed', borderColor: box.color }} />{['top','right','bottom','left'].map(side => <span key={side} className={'outline-edge outline-edge-' + side} />)}<span className="outline-label" style={{ color: box.color }}>{box.iconLabel ?? 'Group'}</span></> : box.icon ? <DiagramIcon id={box.icon} label={box.iconLabel} /> : box.image ? <img src={box.image} alt="Clipboard content" draggable={false} onLoad={e => { if (!box.width || !box.height) updateNote(box.id, { width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight }); }} /> : <span className="note-content">{box.text || <span className="note-placeholder">Write an idea…</span>}</span>}</button>}
+          }}>{box.outline ? <><span className="outline-border" style={{ borderStyle: box.borderStyle ?? 'dashed', borderColor: box.color }} />{['top','right','bottom','left'].map(side => <span key={side} className={'outline-edge outline-edge-' + side} />)}<span className="outline-label" style={{ color: box.color }}>{box.iconLabel ?? 'Group'}</span></> : box.icon ? <DiagramIcon id={box.icon} label={box.iconLabel} scale={Math.min((box.width ?? 120) / 120, (box.height ?? 128) / 128)} /> : box.image ? <img src={box.image} alt="Clipboard content" draggable={false} onLoad={e => { if (!box.width || !box.height) updateNote(box.id, { width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight }); }} /> : <span className="note-content">{box.text || <span className="note-placeholder">Write an idea…</span>}</span>}</button>}
 
-          {!box.image && !box.icon && selectedEntities.includes(box.id) && resizeHandles.map(handle => <button key={handle} className={'outline-resize resize-' + handle} aria-label={'Resize ' + (box.outline ? 'outline ' : 'sticky note ') + handle} title="Drag to resize" onPointerDown={e => {
+          {!box.image && selectedEntities.includes(box.id) && resizeHandles.map(handle => <button key={handle} className={'outline-resize resize-' + handle} style={box.icon ? { width: 24 / view.zoom, height: 24 / view.zoom, borderWidth: 7 / view.zoom, backgroundClip: 'padding-box' } : undefined} aria-label={'Resize ' + (box.outline ? 'outline ' : box.icon ? 'icon ' : 'sticky note ') + handle} title="Drag to resize" onPointerDown={e => {
             if(e.button !== 0) return; e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId);
-            resizeOutline.current = { id: box.id, pointer: e.pointerId, x: e.clientX, y: e.clientY, originX: box.x, originY: box.y, width: box.width ?? (box.outline ? 520 : 240), height: box.height ?? (box.outline ? 360 : 260), handle };
+            resizeOutline.current = { id: box.id, pointer: e.pointerId, x: e.clientX, y: e.clientY, originX: box.x, originY: box.y, width: box.width ?? (box.outline ? 520 : box.icon ? 120 : 240), height: box.height ?? (box.outline ? 360 : box.icon ? 128 : 260), handle };
           }} onPointerMove={e => {
             const r=resizeOutline.current; if(!r || r.pointer !== e.pointerId) return;
             updateNote(r.id, resizeBounds({x:r.originX,y:r.originY,width:r.width,height:r.height},r.handle,(e.clientX-r.x)/camera.current.zoom,(e.clientY-r.y)/camera.current.zoom));
           }} onPointerUp={() => { resizeOutline.current=null; }} onPointerCancel={() => { resizeOutline.current=null; }} onLostPointerCapture={() => { resizeOutline.current=null; }} />)}
         </section>)}
+        {connections.filter(connection => selectedEntities.includes(connection.id)).map(connection => (['from', 'to'] as const).map(end => {
+          const endpoint = connection[end], note = boxes.find(item => item.id === endpoint.noteId);
+          if (!note) return null;
+          const point = anchor(note, endpoint.side);
+          return <button key={connection.id + end} className="arrow-end-handle" style={{ left:point.x, top:point.y, width:24/view.zoom, height:24/view.zoom, borderWidth:6/view.zoom }} aria-label={`Move arrow ${end === 'from' ? 'start' : 'end'}`} title="Drag to a connection dot to move this arrow end" onPointerDown={e => {
+            if (e.button !== 0) return; e.preventDefault(); e.stopPropagation();
+            setReconnecting({id:connection.id,end}); setConnecting(connection[end === 'from' ? 'to' : 'from']); setCursor(point);
+            connectionDrag.current={x:e.clientX,y:e.clientY,moved:false}; e.currentTarget.setPointerCapture(e.pointerId);
+          }} onPointerMove={e => {
+            const drag=connectionDrag.current; if (!drag) return;
+            drag.moved ||= Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>4;
+            const rect=surface.current!.getBoundingClientRect(), c=camera.current;
+            setCursor({x:(e.clientX-rect.left-c.x)/c.zoom,y:(e.clientY-rect.top-c.y)/c.zoom});
+          }} onPointerUp={e => {
+            e.stopPropagation(); const drag=connectionDrag.current; connectionDrag.current=null;
+            if (!drag?.moved) return;
+            const target=document.elementsFromPoint(e.clientX,e.clientY).map(element => element.closest<HTMLButtonElement>('[data-note-id][data-side]')).find(Boolean);
+            if (target && connecting && sides.includes(target.dataset.side as Side)) connect(connecting,{noteId:target.dataset.noteId!,side:target.dataset.side as Side});
+            else { setReconnecting(null); setConnecting(null); setCursor(null); }
+          }} onPointerCancel={() => { connectionDrag.current=null; setReconnecting(null); setConnecting(null); setCursor(null); }} onLostPointerCapture={() => { connectionDrag.current=null; }} onClick={e => { e.stopPropagation(); if (e.detail === 0) { setReconnecting({id:connection.id,end}); setConnecting(connection[end === 'from' ? 'to' : 'from']); setCursor(point); } }} />;
+        }))}
       </div>
     </div>
+    {selectedArrow && <div className="arrow-format" aria-label="Arrow properties"><label htmlFor="arrow-label">Arrow label</label><Input id="arrow-label" maxLength={200} placeholder="e.g. HTTP, publishes, depends on…" value={selectedArrow.label ?? ''} onChange={e=>setConnections(current=>current.map(arrow=>arrow.id===selectedArrow.id?{...arrow,label:e.target.value}:arrow))}/><button aria-pressed={selectedArrow.bidirectional ?? false} onClick={()=>setConnections(current=>current.map(arrow=>arrow.id===selectedArrow.id?{...arrow,bidirectional:!arrow.bidirectional}:arrow))}>{selectedArrow.bidirectional ? '↔ Two-way' : '→ One-way'}</button></div>}
     {selected?.outline && <div className="outline-toolbar" style={{ left: 'clamp(176px, ' + (view.x + selected.x * view.zoom + (selected.width ?? 520) / 2 * view.zoom) + 'px, calc(100vw - 176px))', top: 'clamp(88px, ' + (view.y + selected.y * view.zoom - 136) + 'px, calc(100dvh - 150px))' }}>
       <label htmlFor="outline-label">Outline label</label><Input id="outline-label" maxLength={500} value={selected.iconLabel ?? 'Group'} onChange={e => updateNote(selected.id, { iconLabel: e.target.value })} />
       <div className="outline-options"><NativeSelect aria-label="Border style" value={selected.borderStyle ?? 'dashed'} onChange={e => updateNote(selected.id, { borderStyle: e.target.value as 'solid' | 'dashed' | 'dotted' })}><NativeSelectOption value="solid">Solid</NativeSelectOption><NativeSelectOption value="dashed">Dashed</NativeSelectOption><NativeSelectOption value="dotted">Dotted</NativeSelectOption></NativeSelect><label>Color <input type="color" aria-label="Outline color" value={selected.color} onChange={e => updateNote(selected.id, { color: e.target.value })} /></label></div>
@@ -403,6 +479,12 @@ setBoxes(current => [...current, { id, x: (el.clientWidth / 2 - c.x) / c.zoom - 
 setEditingId(null); setSelectedId(id); setIconsOpen(false); setIconQuery('');
 }}><DiagramIcon id={item.id} /></button>)}</div>{filteredIcons.length === 0 && <p>No matching icons.</p>}</PopoverContent></Popover><div className="divider" /><button aria-label="Toggle dot grid" aria-pressed={grid} title="Toggle dot grid" onClick={() => setGrid(!grid)}><Grid2X2 size={20} /></button></div>
     {connecting && <output className="connection-help">Choose a dot on another note · Esc to cancel</output>}
+    <div className="board-history-search">
+      <button aria-label="Undo" title="Undo (Ctrl/Cmd+Z)" disabled={!history.state.past.length} onClick={()=>undoRedo()}><Undo2 size={17}/></button>
+      <button aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)" disabled={!history.state.future.length} onClick={()=>undoRedo(true)}><Redo2 size={17}/></button>
+      <Search size={15} aria-hidden="true"/><Input ref={searchInput} aria-label="Search board entities" placeholder="Search board…" value={search} onFocus={()=>setSearchOpen(true)} onChange={e=>{setSearch(e.target.value);setSearchOpen(true);}} onKeyDown={e=>{if(e.key==='Escape'){setSearchOpen(false);surface.current?.focus();}if(e.key==='Enter'&&searchResults[0]){e.preventDefault();jumpTo(searchResults[0]);}}}/>
+      {searchOpen && search.trim() && <div className="board-search-results"><div className="board-search-heading">{searchResults.length} matches <button aria-label="Close search results" onClick={()=>setSearchOpen(false)}><X size={14}/></button></div>{searchResults.slice(0,50).map(box=><button key={box.id} onClick={()=>jumpTo(box)}>{entityLabel(box)}<small>{box.icon?'Icon':box.outline?'Outline':box.image?'Image':'Sticky note'}</small></button>)}{searchResults.length===0&&<p>No matching entities.</p>}</div>}
+    </div>
     <div className="hint"><span>Right-drag to pan</span><i /><span>Scroll to zoom</span><i /><span>Left-drag to select</span></div>
     <div className="panel zoom-controls" aria-label="Zoom controls"><button aria-label="Zoom out" disabled={view.zoom <= .1} onClick={() => zoomCenter(1 / 1.2)}><Minus size={18} /></button><button className="zoom-value" title="Reset zoom to 100%" onClick={() => zoomCenter(1 / camera.current.zoom)}>{Math.round(view.zoom * 100)}%</button><button aria-label="Zoom in" disabled={view.zoom >= 4} onClick={() => zoomCenter(1.2)}><Plus size={18} /></button><div className="divider" /><button aria-label="Return to origin" title="Return to origin (0)" onClick={reset}><LocateFixed size={19} /></button></div>
   </main>;

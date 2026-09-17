@@ -10,3 +10,5 @@ Retrieved 2026-09-06. These vendor assets identify their respective services in 
 All assets are served locally. Existing entity IDs and user labels are preserved.
 
 Expansion: all 295 additional unique 64px service SVGs from the same official July 31, 2026 AWS package are included. Their original service names and categories are recorded in lib/aws-icon-catalog.json. Generic flowchart, networking, security, data, people/device, and application symbols use Lucide. No Lucidchart assets are copied.
+
+Development-tool expansion (2026-09-16): 59 unmodified logo SVGs bundled from [Devicon](https://github.com/devicons/devicon), an MIT-licensed community collection of development logos. The pinned commit and exact source URL of each asset are in DEVICON-SOURCES.json; the license is in DEVICON-LICENSE.txt. These are brand logos sourced through Devicon, not vendor-provided downloads. Engineering concepts (container images, registry, Kubernetes resources, pipelines, workers, monitoring) use Lucide pictograms. All assets remain local and work offline.

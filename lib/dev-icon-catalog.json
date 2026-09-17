@@ -1,0 +1,356 @@
+[
+  {
+    "id": "dev-docker",
+    "label": "Docker",
+    "category": "Containers & Kubernetes",
+    "color": "#019bc6"
+  },
+  {
+    "id": "dev-kubernetes",
+    "label": "Kubernetes (K8s)",
+    "category": "Containers & Kubernetes",
+    "color": "#326ce5"
+  },
+  {
+    "id": "dev-helm",
+    "label": "Helm",
+    "category": "Containers & Kubernetes",
+    "color": "#0F1689"
+  },
+  {
+    "id": "dev-argocd",
+    "label": "Argo CD",
+    "category": "Containers & Kubernetes",
+    "color": "#ef7b4d"
+  },
+  {
+    "id": "dev-podman",
+    "label": "Podman",
+    "category": "Containers & Kubernetes",
+    "color": "#892ca0"
+  },
+  {
+    "id": "dev-rancher",
+    "label": "Rancher",
+    "category": "Containers & Kubernetes",
+    "color": "#2453FF"
+  },
+  {
+    "id": "dev-git",
+    "label": "Git",
+    "category": "CI/CD & Infrastructure",
+    "color": "#f34f29"
+  },
+  {
+    "id": "dev-gitlab",
+    "label": "Gitlab",
+    "category": "CI/CD & Infrastructure",
+    "color": "#E24329"
+  },
+  {
+    "id": "dev-githubactions",
+    "label": "GitHub Actions",
+    "category": "CI/CD & Infrastructure",
+    "color": "#2088FF"
+  },
+  {
+    "id": "dev-jenkins",
+    "label": "Jenkins",
+    "category": "CI/CD & Infrastructure",
+    "color": "#F0D6B7"
+  },
+  {
+    "id": "dev-terraform",
+    "label": "Terraform",
+    "category": "CI/CD & Infrastructure",
+    "color": "#5c4ee5"
+  },
+  {
+    "id": "dev-ansible",
+    "label": "Ansible",
+    "category": "CI/CD & Infrastructure",
+    "color": "#1A1918"
+  },
+  {
+    "id": "dev-vagrant",
+    "label": "Vagrant",
+    "category": "CI/CD & Infrastructure",
+    "color": "#127eff"
+  },
+  {
+    "id": "dev-prometheus",
+    "label": "Prometheus",
+    "category": "CI/CD & Infrastructure",
+    "color": "#e75225"
+  },
+  {
+    "id": "dev-grafana",
+    "label": "Grafana",
+    "category": "CI/CD & Infrastructure",
+    "color": "#f7a525"
+  },
+  {
+    "id": "dev-elasticsearch",
+    "label": "Elasticsearch",
+    "category": "CI/CD & Infrastructure",
+    "color": "#00bfb3"
+  },
+  {
+    "id": "dev-logstash",
+    "label": "Logstash",
+    "category": "CI/CD & Infrastructure",
+    "color": "#fec514"
+  },
+  {
+    "id": "dev-kibana",
+    "label": "Kibana",
+    "category": "CI/CD & Infrastructure",
+    "color": "#F04E98"
+  },
+  {
+    "id": "dev-nginx",
+    "label": "Nginx",
+    "category": "CI/CD & Infrastructure",
+    "color": "#090"
+  },
+  {
+    "id": "dev-apache",
+    "label": "Apache",
+    "category": "CI/CD & Infrastructure",
+    "color": "#cb2533"
+  },
+  {
+    "id": "dev-vault",
+    "label": "Vault",
+    "category": "CI/CD & Infrastructure",
+    "color": "#ffd814"
+  },
+  {
+    "id": "dev-postgresql",
+    "label": "PostgreSQL",
+    "category": "Databases & Messaging",
+    "color": "#336791"
+  },
+  {
+    "id": "dev-mysql",
+    "label": "MySQL",
+    "category": "Databases & Messaging",
+    "color": "#00618a"
+  },
+  {
+    "id": "dev-mongodb",
+    "label": "MongoDB",
+    "category": "Databases & Messaging",
+    "color": "#4FAA41"
+  },
+  {
+    "id": "dev-sqlite",
+    "label": "Sqlite",
+    "category": "Databases & Messaging",
+    "color": "#0f80cc"
+  },
+  {
+    "id": "dev-redis",
+    "label": "Redis",
+    "category": "Databases & Messaging",
+    "color": "#d82c20"
+  },
+  {
+    "id": "dev-rabbitmq",
+    "label": "Rabbitmq",
+    "category": "Databases & Messaging",
+    "color": "#ff6600"
+  },
+  {
+    "id": "dev-apachekafka",
+    "label": "Apache Kafka",
+    "category": "Databases & Messaging",
+    "color": "#231f20"
+  },
+  {
+    "id": "dev-cassandra",
+    "label": "Cassandra",
+    "category": "Databases & Messaging",
+    "color": "#1185b0"
+  },
+  {
+    "id": "dev-neo4j",
+    "label": "Neo4j",
+    "category": "Databases & Messaging",
+    "color": "#018BFF"
+  },
+  {
+    "id": "dev-python",
+    "label": "Python",
+    "category": "Languages & Frameworks",
+    "color": "#ffd845"
+  },
+  {
+    "id": "dev-go",
+    "label": "Go",
+    "category": "Languages & Frameworks",
+    "color": "#00acd7"
+  },
+  {
+    "id": "dev-rust",
+    "label": "Rust",
+    "category": "Languages & Frameworks",
+    "color": "#000"
+  },
+  {
+    "id": "dev-java",
+    "label": "Java",
+    "category": "Languages & Frameworks",
+    "color": "#EA2D2E"
+  },
+  {
+    "id": "dev-javascript",
+    "label": "Javascript",
+    "category": "Languages & Frameworks",
+    "color": "#f0db4f"
+  },
+  {
+    "id": "dev-typescript",
+    "label": "Typescript",
+    "category": "Languages & Frameworks",
+    "color": "#007acc"
+  },
+  {
+    "id": "dev-nodejs",
+    "label": "Node.js",
+    "category": "Languages & Frameworks",
+    "color": "#5fa04e"
+  },
+  {
+    "id": "dev-react",
+    "label": "React",
+    "category": "Languages & Frameworks",
+    "color": "#61dafb"
+  },
+  {
+    "id": "dev-nextjs",
+    "label": "Next.js",
+    "category": "Languages & Frameworks",
+    "color": "#000"
+  },
+  {
+    "id": "dev-vuejs",
+    "label": "Vue.js",
+    "category": "Languages & Frameworks",
+    "color": "#41B883"
+  },
+  {
+    "id": "dev-angular",
+    "label": "Angular",
+    "category": "Languages & Frameworks",
+    "color": "#FFFFFF"
+  },
+  {
+    "id": "dev-spring",
+    "label": "Spring",
+    "category": "Languages & Frameworks",
+    "color": "#5FB832"
+  },
+  {
+    "id": "dev-fastapi",
+    "label": "Fastapi",
+    "category": "Languages & Frameworks",
+    "color": "#009688"
+  },
+  {
+    "id": "dev-django",
+    "label": "Django",
+    "category": "Languages & Frameworks",
+    "color": "#092e20"
+  },
+  {
+    "id": "dev-linux",
+    "label": "Linux",
+    "category": "Developer Tools",
+    "color": "#000000"
+  },
+  {
+    "id": "dev-ubuntu",
+    "label": "Ubuntu",
+    "category": "Developer Tools",
+    "color": "#e95420"
+  },
+  {
+    "id": "dev-bash",
+    "label": "Bash",
+    "category": "Developer Tools",
+    "color": "#293138"
+  },
+  {
+    "id": "dev-vscode",
+    "label": "VS Code",
+    "category": "Developer Tools",
+    "color": "#3C99D4"
+  },
+  {
+    "id": "dev-npm",
+    "label": "Npm",
+    "category": "Developer Tools",
+    "color": "#cb3837"
+  },
+  {
+    "id": "dev-pnpm",
+    "label": "Pnpm",
+    "category": "Developer Tools",
+    "color": "#f9ad00"
+  },
+  {
+    "id": "dev-yarn",
+    "label": "Yarn",
+    "category": "Developer Tools",
+    "color": "#2c8ebb"
+  },
+  {
+    "id": "dev-maven",
+    "label": "Maven",
+    "category": "Developer Tools",
+    "color": "#e97826"
+  },
+  {
+    "id": "dev-gradle",
+    "label": "Gradle",
+    "category": "Developer Tools",
+    "color": "#02303a"
+  },
+  {
+    "id": "dev-pytest",
+    "label": "Pytest",
+    "category": "Developer Tools",
+    "color": "#009fe3"
+  },
+  {
+    "id": "dev-jest",
+    "label": "Jest",
+    "category": "Developer Tools",
+    "color": "#99425b"
+  },
+  {
+    "id": "dev-playwright",
+    "label": "Playwright",
+    "category": "Developer Tools",
+    "color": "#2EAD33"
+  },
+  {
+    "id": "dev-postman",
+    "label": "Postman",
+    "category": "Developer Tools",
+    "color": "#f37036"
+  },
+  {
+    "id": "dev-swagger",
+    "label": "Swagger",
+    "category": "Developer Tools",
+    "color": "#85ea2d"
+  },
+  {
+    "id": "dev-grpc",
+    "label": "gRPC",
+    "category": "Developer Tools",
+    "color": "#00b0ad"
+  }
+]

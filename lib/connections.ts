@@ -12,3 +12,9 @@ export function connectionPath(a: { x: number; y: number }, from: Side, b: { x: 
   const p = vectors[from], q = vectors[to];
   return `M ${a.x} ${a.y} C ${a.x + p[0] * distance} ${a.y + p[1] * distance}, ${b.x + q[0] * distance} ${b.y + q[1] * distance}, ${b.x} ${b.y}`;
 }
+
+export function connectionMidpoint(a:{x:number;y:number}, from:Side, b:{x:number;y:number}, to:Side) {
+  const vectors={top:[0,-1],right:[1,0],bottom:[0,1],left:[-1,0]};
+  const distance=Math.max(48,Math.min(180,Math.hypot(b.x-a.x,b.y-a.y)/2));
+  return {x:(a.x+b.x)/2+3/8*distance*(vectors[from][0]+vectors[to][0]),y:(a.y+b.y)/2+3/8*distance*(vectors[from][1]+vectors[to][1])};
+}

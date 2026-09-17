@@ -1,0 +1,242 @@
+{
+  "repository": "https://github.com/devicons/devicon",
+  "commit": "7330accdbc47e2dc0c19789a48533c4a3c50fe58",
+  "icons": [
+    {
+      "id": "dev-docker",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/docker/docker-original.svg"
+    },
+    {
+      "id": "dev-kubernetes",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/kubernetes/kubernetes-original.svg"
+    },
+    {
+      "id": "dev-helm",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/helm/helm-original.svg"
+    },
+    {
+      "id": "dev-argocd",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/argocd/argocd-original.svg"
+    },
+    {
+      "id": "dev-podman",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/podman/podman-original.svg"
+    },
+    {
+      "id": "dev-rancher",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/rancher/rancher-original.svg"
+    },
+    {
+      "id": "dev-git",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/git/git-original.svg"
+    },
+    {
+      "id": "dev-gitlab",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/gitlab/gitlab-original.svg"
+    },
+    {
+      "id": "dev-githubactions",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/githubactions/githubactions-original.svg"
+    },
+    {
+      "id": "dev-jenkins",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/jenkins/jenkins-original.svg"
+    },
+    {
+      "id": "dev-terraform",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/terraform/terraform-original.svg"
+    },
+    {
+      "id": "dev-ansible",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/ansible/ansible-original.svg"
+    },
+    {
+      "id": "dev-vagrant",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/vagrant/vagrant-original.svg"
+    },
+    {
+      "id": "dev-prometheus",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/prometheus/prometheus-original.svg"
+    },
+    {
+      "id": "dev-grafana",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/grafana/grafana-original.svg"
+    },
+    {
+      "id": "dev-elasticsearch",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/elasticsearch/elasticsearch-original.svg"
+    },
+    {
+      "id": "dev-logstash",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/logstash/logstash-original.svg"
+    },
+    {
+      "id": "dev-kibana",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/kibana/kibana-original.svg"
+    },
+    {
+      "id": "dev-nginx",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/nginx/nginx-original.svg"
+    },
+    {
+      "id": "dev-apache",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/apache/apache-original.svg"
+    },
+    {
+      "id": "dev-vault",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/vault/vault-original.svg"
+    },
+    {
+      "id": "dev-postgresql",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/postgresql/postgresql-original.svg"
+    },
+    {
+      "id": "dev-mysql",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/mysql/mysql-original.svg"
+    },
+    {
+      "id": "dev-mongodb",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/mongodb/mongodb-original.svg"
+    },
+    {
+      "id": "dev-sqlite",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/sqlite/sqlite-original.svg"
+    },
+    {
+      "id": "dev-redis",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/redis/redis-original.svg"
+    },
+    {
+      "id": "dev-rabbitmq",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/rabbitmq/rabbitmq-original.svg"
+    },
+    {
+      "id": "dev-apachekafka",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/apachekafka/apachekafka-original.svg"
+    },
+    {
+      "id": "dev-cassandra",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/cassandra/cassandra-original.svg"
+    },
+    {
+      "id": "dev-neo4j",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/neo4j/neo4j-original.svg"
+    },
+    {
+      "id": "dev-python",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/python/python-original.svg"
+    },
+    {
+      "id": "dev-go",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/go/go-original.svg"
+    },
+    {
+      "id": "dev-rust",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/rust/rust-original.svg"
+    },
+    {
+      "id": "dev-java",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/java/java-original.svg"
+    },
+    {
+      "id": "dev-javascript",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/javascript/javascript-original.svg"
+    },
+    {
+      "id": "dev-typescript",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/typescript/typescript-original.svg"
+    },
+    {
+      "id": "dev-nodejs",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/nodejs/nodejs-original.svg"
+    },
+    {
+      "id": "dev-react",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/react/react-original.svg"
+    },
+    {
+      "id": "dev-nextjs",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/nextjs/nextjs-original.svg"
+    },
+    {
+      "id": "dev-vuejs",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/vuejs/vuejs-original.svg"
+    },
+    {
+      "id": "dev-angular",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/angular/angular-original.svg"
+    },
+    {
+      "id": "dev-spring",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/spring/spring-original.svg"
+    },
+    {
+      "id": "dev-fastapi",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/fastapi/fastapi-original.svg"
+    },
+    {
+      "id": "dev-django",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/django/django-plain.svg"
+    },
+    {
+      "id": "dev-linux",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/linux/linux-original.svg"
+    },
+    {
+      "id": "dev-ubuntu",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/ubuntu/ubuntu-original.svg"
+    },
+    {
+      "id": "dev-bash",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/bash/bash-original.svg"
+    },
+    {
+      "id": "dev-vscode",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/vscode/vscode-original.svg"
+    },
+    {
+      "id": "dev-npm",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/npm/npm-original.svg"
+    },
+    {
+      "id": "dev-pnpm",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/pnpm/pnpm-original.svg"
+    },
+    {
+      "id": "dev-yarn",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/yarn/yarn-original.svg"
+    },
+    {
+      "id": "dev-maven",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/maven/maven-original.svg"
+    },
+    {
+      "id": "dev-gradle",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/gradle/gradle-original.svg"
+    },
+    {
+      "id": "dev-pytest",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/pytest/pytest-original.svg"
+    },
+    {
+      "id": "dev-jest",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/jest/jest-plain.svg"
+    },
+    {
+      "id": "dev-playwright",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/playwright/playwright-original.svg"
+    },
+    {
+      "id": "dev-postman",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/postman/postman-original.svg"
+    },
+    {
+      "id": "dev-swagger",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/swagger/swagger-original.svg"
+    },
+    {
+      "id": "dev-grpc",
+      "source": "https://raw.githubusercontent.com/devicons/devicon/7330accdbc47e2dc0c19789a48533c4a3c50fe58/icons/grpc/grpc-original.svg"
+    }
+  ]
+}

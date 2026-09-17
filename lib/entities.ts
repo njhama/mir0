@@ -1,6 +1,6 @@
 import { sides, type Side } from './connections';
 export type NoteEntity = { id: string; x: number; y: number; text: string; color: string; fontSize: number; bold: boolean; outline?: boolean; borderStyle?: 'solid' | 'dashed' | 'dotted'; icon?: string; iconLabel?: string; textAlign?: 'left' | 'center' | 'right'; verticalAlign?: 'top' | 'middle' | 'bottom'; image?: string; width?: number; height?: number };
-export type ArrowEntity = { id: string; from: { noteId: string; side: Side }; to: { noteId: string; side: Side } };
+export type ArrowEntity = { id: string; label?: string; bidirectional?: boolean; from: { noteId: string; side: Side }; to: { noteId: string; side: Side } };
 export type EntityClipboard = { format: 'whiteboard-entities'; version: 1; notes: NoteEntity[]; arrows: ArrowEntity[] };
 export function copyEntities(notes: NoteEntity[], arrows: ArrowEntity[], selection: string[]): EntityClipboard {
   const ids = new Set(selection);
@@ -29,6 +29,8 @@ export function parseEntities(text: string): EntityClipboard | null {
     const arrowIds = new Set<string>();
     for (const arrow of data.arrows) {
       if (!arrow || typeof arrow.id !== 'string' || ids.has(arrow.id) || arrowIds.has(arrow.id) || !ids.has(arrow.from?.noteId) || !ids.has(arrow.to?.noteId) || !sides.includes(arrow.from.side) || !sides.includes(arrow.to.side)) return null;
+      if (arrow.label !== undefined && (typeof arrow.label !== 'string' || arrow.label.length > 200)) return null;
+      if (arrow.bidirectional !== undefined && typeof arrow.bidirectional !== 'boolean') return null;
       arrowIds.add(arrow.id);
     }
     return data;
@@ -41,9 +43,3 @@ export function duplicateEntities(data: EntityClipboard, offset: number) {
     arrows: data.arrows.map(arrow => ({ ...arrow, id: crypto.randomUUID(), from: { ...arrow.from, noteId: ids.get(arrow.from.noteId)! }, to: { ...arrow.to, noteId: ids.get(arrow.to.noteId)! } })),
   };
 }
-
-
-
-
-
-
